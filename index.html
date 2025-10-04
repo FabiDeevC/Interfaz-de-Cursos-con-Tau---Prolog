@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Interfaz de Cursos con Tau - Prolog</title>
+    <script src="https://cdn.jsdelivr.net/gh/tau-prolog/tau-prolog/modules/core.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/tau-prolog/tau-prolog/modules/lists.js"></script>
+    <style>
+        /* Variables y Estilos Generales */
+        :root {
+            --primary-color: #6200EE; /* Púrpura/Azul Vibrante */
+            --primary-dark: #3700B3;
+            --background-color: #f7f7f7;
+            --surface-color: #ffffff;
+            --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif; /* Fuente moderna */
+            background: var(--background-color);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: var(--surface-color);
+            width: 90%;
+            max-width: 450px;
+            padding: 40px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        /* Tipografía */
+        h1 {
+            text-align: center;
+            color: var(--primary-dark);
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            font-weight: 500;
+        }
+
+        /* Formularios */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: #495057;
+            font-size: 1rem;
+        }
+
+        select {
+            width: 100%;
+            padding: 14px 10px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            font-size: 16px;
+            background: var(--surface-color);
+            appearance: none; /* Oculta el estilo de flecha por defecto */
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(98, 0, 238, 0.2);
+        }
+
+        /* Botón de Acción */
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            letter-spacing: 0.5px;
+            transition: background 0.3s ease, transform 0.1s;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        button:active {
+            transform: scale(0.99);
+        }
+
+        /* Resultados */
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: var(--radius);
+            background: #E8F5E9; /* Fondo verde claro para resultados */
+            color: #1B5E20; /* Texto verde oscuro */
+            font-weight: 500;
+            border: 1px solid #C8E6C9;
+        }
+        
+        .result b {
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        
+        /* Estilo para error/falta de requisitos */
+        .result.error {
+            background: #FFEBEE; /* Fondo rojo claro */
+            color: #B71C1C; /* Texto rojo oscuro */
+            border: 1px solid #FFCDD2;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Sistema de Selección de Cursos</h1>
+    
+    <div class="form-group">
+        <label for="alumno">Selecciona un alumno:</label>
+        <select id="alumno">
+            <option value="kevin">Kevin</option>
+            <option value="fabiana">Fabiana</option>
+            <option value="miguel">Miguel</option>
+            <option value="armando">Armando</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="curso">Selecciona un curso:</label>
+        <select id="curso">
+            <option value="introduccion_programacion">Introducción a la Programación</option>
+            <option value="programacion_avanzada">Programación Avanzada</option>
+            <option value="calculo1">Cálculo I</option>
+            <option value="calculo2">Cálculo II</option>
+        </select>
+    </div>
+    
+    <button onclick="consulta()">VERIFICAR INSCRIPCIÓN</button>
+    
+    <div id="resultado" class="result">Esperando consulta...</div>
+</div>
+
+<script>
+    // La Base de Conocimiento y las funciones de JavaScript se mantienen intactas.
+    // Solo se actualiza el manejo del CSS para mostrar el estado de "error"
+    const prologCode = `
+        % --- Materias (4 clases) ---
+        materia(introduccion_programacion).
+        materia(programacion_avanzada).
+        materia(calculo1).
+        materia(calculo2).
+
+        % --- Cursos aprobados (Alumnos nuevos) ---
+        aprobada(kevin, introduccion_programacion).
+        aprobada(kevin, calculo1).
+
+        aprobada(fabiana, introduccion_programacion).
+        aprobada(fabiana, programacion_avanzada).
+        aprobada(fabiana, calculo1).
+        
+        aprobada(miguel, calculo1).
+        
+        aprobada(armando, introduccion_programacion).
+
+        % --- Requisitos ---
+        requisito(programacion_avanzada, introduccion_programacion).
+        requisito(calculo2, calculo1).
+        
+        % --- Estados de los cursos ---
+        estado_curso(Alumno, Curso, ya_aprobado) :-
+            aprobada(Alumno, Curso).
+
+        estado_curso(Alumno, Curso, puede_cursar) :-
+            materia(Curso),
+            \\+ aprobada(Alumno, Curso),
+            forall(requisito(Curso, Pre), aprobada(Alumno, Pre)).
+
+        estado_curso(Alumno, Curso, no_puede) :-
+            materia(Curso),
+            \\+ aprobada(Alumno, Curso),
+            (requisito(Curso, Pre), \\+ aprobada(Alumno, Pre)).
+
+        % --- Requisitos faltantes ---
+        faltan(Alumno, Curso, X) :-
+            findall(Pre, (requisito(Curso, Pre), \\+ aprobada(Alumno, Pre)), X).
+    `;
+
+    const session = pl.create();
+    session.consult(prologCode);
+
+    function capitalize(s) {
+        if (typeof s !== 'string') return ''
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+    
+    function updateResult(message, isError = false) {
+        const div = document.getElementById("resultado");
+        div.innerHTML = message;
+        // Limpiar estilos anteriores
+        div.classList.remove('error'); 
+        // Aplicar estilo de error si es necesario
+        if (isError) {
+            div.classList.add('error');
+        } else {
+            // Aplicar estilo normal (verde) por defecto para 'puede' y 'aprobado'
+            div.style.background = '#E8F5E9';
+            div.style.color = '#1B5E20';
+        }
+    }
+
+    // Función principal para consultar el estado del curso
+    function consulta(){
+        const alumno = document.getElementById("alumno").value;
+        const curso = document.getElementById("curso").value;
+        const query = `estado_curso(${alumno},${curso},Estado).`;
+        
+        session.query(query);
+        session.answer(answer => {
+            const cursoDisplay = curso.replace(/_/g," ");
+            
+            if (pl.type.is_substitution(answer)){
+                const estado = answer.lookup("Estado").id;
+                
+                if (estado === "ya_aprobado") {
+                    updateResult(`✅ <b>${capitalize(alumno)}</b> ya aprobó <b>${capitalize(cursoDisplay)}</b>.`);
+                } else if (estado === "puede_cursar") {
+                    updateResult(`🥳 <b>${capitalize(alumno)}</b> SÍ puede cursar <b>${capitalize(cursoDisplay)}</b>. ¡Adelante!`);
+                } else if (estado === "no_puede") {
+                    consulta_faltantes(true);
+                }
+            } else {
+                updateResult("⚠️ No se encontró información para la consulta.", true);
+            }
+        });
+    }
+
+    // Función para consultar los requisitos faltantes
+    function consulta_faltantes(fromConsulta=false){
+        const alumno = document.getElementById("alumno").value;
+        const curso = document.getElementById("curso").value;
+        const query = `faltan(${alumno},${curso},X).`;
+
+        session.query(query);
+        session.answer(answer => {
+            const cursoDisplay = curso.replace(/_/g," ");
+            
+            if (pl.type.is_substitution(answer)){
+                const faltantes = answer.lookup("X");
+                let lista = [];
+
+                if (faltantes.indicator === "./2") {
+                    let node = faltantes;
+                    while (node.indicator === "./2") {
+                        lista.push(capitalize(node.args[0].id.replace(/_/g," "))); 
+                        node = node.args[1];
+                    }
+                }
+
+                if (lista.length > 0){
+                    updateResult(`❌ <b>${capitalize(alumno)}</b> NO puede cursar <b>${capitalize(cursoDisplay)}</b>. Le falta(n): ${lista.join(", ")}.`, true);
+                } else if(!fromConsulta) {
+                    updateResult(`👍 <b>${capitalize(alumno)}</b> no necesita requisitos adicionales para <b>${capitalize(cursoDisplay)}</b>`, false);
+                }
+            } else if(!fromConsulta) {
+                updateResult(`👍 <b>${capitalize(alumno)}</b> no necesita requisitos adicionales para <b>${capitalize(cursoDisplay)}</b>`, false);
+            }
+        });
+    }
+</script>
+</body>
+</html>
